@@ -34,7 +34,7 @@ Copyright (c) 2022 Audiokinetic Inc.
 namespace ToneFilterConfig
 {
     static const unsigned short CompanyID = 64;
-    static const unsigned short PluginID = 9018;
+    static const unsigned short PluginID = 24290;
 }
 
 #endif // ToneFilterConfig_H

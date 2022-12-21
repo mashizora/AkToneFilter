@@ -29,12 +29,12 @@ the specific language governing permissions and limitations under the License.
 
 #include <AK/AkWwiseSDKVersion.h>
 
-AK::IAkPlugin* CreateToneFilterFX(AK::IAkPluginMemAlloc* in_pAllocator)
+AK::IAkPlugin *CreateToneFilterFX(AK::IAkPluginMemAlloc *in_pAllocator)
 {
     return AK_PLUGIN_NEW(in_pAllocator, ToneFilterFX());
 }
 
-AK::IAkPluginParam* CreateToneFilterFXParams(AK::IAkPluginMemAlloc* in_pAllocator)
+AK::IAkPluginParam *CreateToneFilterFXParams(AK::IAkPluginMemAlloc *in_pAllocator)
 {
     return AK_PLUGIN_NEW(in_pAllocator, ToneFilterFXParams());
 }
@@ -42,9 +42,7 @@ AK::IAkPluginParam* CreateToneFilterFXParams(AK::IAkPluginMemAlloc* in_pAllocato
 AK_IMPLEMENT_PLUGIN_FACTORY(ToneFilterFX, AkPluginTypeEffect, ToneFilterConfig::CompanyID, ToneFilterConfig::PluginID)
 
 ToneFilterFX::ToneFilterFX()
-    : m_pParams(nullptr)
-    , m_pAllocator(nullptr)
-    , m_pContext(nullptr)
+    : m_pParams(nullptr), m_pAllocator(nullptr), m_pContext(nullptr)
 {
 }
 
@@ -52,16 +50,18 @@ ToneFilterFX::~ToneFilterFX()
 {
 }
 
-AKRESULT ToneFilterFX::Init(AK::IAkPluginMemAlloc* in_pAllocator, AK::IAkEffectPluginContext* in_pContext, AK::IAkPluginParam* in_pParams, AkAudioFormat& in_rFormat)
+AKRESULT ToneFilterFX::Init(AK::IAkPluginMemAlloc *in_pAllocator, AK::IAkEffectPluginContext *in_pContext, AK::IAkPluginParam *in_pParams, AkAudioFormat &in_rFormat)
 {
-    m_pParams = (ToneFilterFXParams*)in_pParams;
+    m_pParams = (ToneFilterFXParams *)in_pParams;
     m_pAllocator = in_pAllocator;
     m_pContext = in_pContext;
+
+    sampleRate = in_rFormat.uSampleRate;
 
     return AK_Success;
 }
 
-AKRESULT ToneFilterFX::Term(AK::IAkPluginMemAlloc* in_pAllocator)
+AKRESULT ToneFilterFX::Term(AK::IAkPluginMemAlloc *in_pAllocator)
 {
     AK_PLUGIN_DELETE(in_pAllocator, this);
     return AK_Success;
@@ -72,30 +72,48 @@ AKRESULT ToneFilterFX::Reset()
     return AK_Success;
 }
 
-AKRESULT ToneFilterFX::GetPluginInfo(AkPluginInfo& out_rPluginInfo)
+AKRESULT ToneFilterFX::GetPluginInfo(AkPluginInfo &out_rPluginInfo)
 {
     out_rPluginInfo.eType = AkPluginTypeEffect;
     out_rPluginInfo.bIsInPlace = true;
-	out_rPluginInfo.bCanProcessObjects = false;
+    out_rPluginInfo.bCanProcessObjects = false;
     out_rPluginInfo.uBuildVersion = AK_WWISESDK_VERSION_COMBINED;
     return AK_Success;
 }
 
-void ToneFilterFX::Execute(AkAudioBuffer* io_pBuffer)
+void ToneFilterFX::Execute(AkAudioBuffer *io_pBuffer)
 {
-    const AkUInt32 uNumChannels = io_pBuffer->NumChannels();
+    io_pBuffer->ZeroPadToMaxFrames();
+    const auto uNumChannels = io_pBuffer->NumChannels();
+    const auto uMaxFrames = io_pBuffer->MaxFrames();
 
-    AkUInt16 uFramesProcessed;
-    for (AkUInt32 i = 0; i < uNumChannels; ++i)
+    filterArray[0].coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(sampleRate, m_pParams->RTPC.fFREQ0, 40);
+    filterArray[1].coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(sampleRate, m_pParams->RTPC.fFREQ1, 40);
+    filterArray[2].coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(sampleRate, m_pParams->RTPC.fFREQ2, 40);
+    filterArray[3].coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(sampleRate, m_pParams->RTPC.fFREQ3, 40);
+
+    for (AkUInt32 i = 0; i < io_pBuffer->NumChannels(); ++i)
     {
-        AkReal32* AK_RESTRICT pBuf = (AkReal32* AK_RESTRICT)io_pBuffer->GetChannel(i);
+        AkSampleType *data = io_pBuffer->GetChannel(i);
+        juce::dsp::AudioBlock<AkSampleType> block(&data, 1, uMaxFrames);
+        juce::dsp::ProcessContextReplacing<AkSampleType> context(block);
+        AkSampleType *tempData = static_cast<AkSampleType *>(AK_PLUGIN_ALLOC(m_pAllocator, sizeof(AkSampleType) * uMaxFrames));
+        juce::dsp::AudioBlock<AkSampleType> tempBlock(&tempData, 1, uMaxFrames);
+        juce::dsp::ProcessContextNonReplacing<AkSampleType> tempContext(block, tempBlock);
 
-        uFramesProcessed = 0;
-        while (uFramesProcessed < io_pBuffer->uValidFrames)
+        filterArray[0].process(tempContext);
+
+        auto &&inputBlock = tempContext.getOutputBlock();
+        auto &&outputBlock = context.getOutputBlock();
+
+        auto numSamples = inputBlock.getNumSamples();
+        auto *src = inputBlock.getChannelPointer(0);
+        auto *dst = outputBlock.getChannelPointer(0);
+        for (size_t i = 0; i < numSamples; ++i)
         {
-            // Execute DSP in-place here
-            ++uFramesProcessed;
+            dst[i] = src[i];
         }
+        AK_PLUGIN_FREE(m_pAllocator, tempData);
     }
 }
 

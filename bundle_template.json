@@ -11,7 +11,7 @@
     "tag": "ToneFilter",
 
     // Description displayed in the Wwise Launcher for this bundle
-    "description": "A Tone Filter Effect inspired by NieR:Automata.",
+    "description": "A Tone Filter effect inspired by NieR:Automata.",
 
     // Vendor name displayed in the Wwise Launcher for this bundle
     "vendor": "mashisora",

@@ -36,24 +36,27 @@ ToneFilterFXParams::~ToneFilterFXParams()
 {
 }
 
-ToneFilterFXParams::ToneFilterFXParams(const ToneFilterFXParams& in_rParams)
+ToneFilterFXParams::ToneFilterFXParams(const ToneFilterFXParams &in_rParams)
 {
     RTPC = in_rParams.RTPC;
     NonRTPC = in_rParams.NonRTPC;
     m_paramChangeHandler.SetAllParamChanges();
 }
 
-AK::IAkPluginParam* ToneFilterFXParams::Clone(AK::IAkPluginMemAlloc* in_pAllocator)
+AK::IAkPluginParam *ToneFilterFXParams::Clone(AK::IAkPluginMemAlloc *in_pAllocator)
 {
     return AK_PLUGIN_NEW(in_pAllocator, ToneFilterFXParams(*this));
 }
 
-AKRESULT ToneFilterFXParams::Init(AK::IAkPluginMemAlloc* in_pAllocator, const void* in_pParamsBlock, AkUInt32 in_ulBlockSize)
+AKRESULT ToneFilterFXParams::Init(AK::IAkPluginMemAlloc *in_pAllocator, const void *in_pParamsBlock, AkUInt32 in_ulBlockSize)
 {
     if (in_ulBlockSize == 0)
     {
         // Initialize default parameters here
-        RTPC.fPlaceholder = 0.0f;
+        RTPC.fFREQ0 = 440.0f;
+        RTPC.fFREQ1 = 440.0f;
+        RTPC.fFREQ2 = 440.0f;
+        RTPC.fFREQ3 = 440.0f;
         m_paramChangeHandler.SetAllParamChanges();
         return AK_Success;
     }
@@ -61,35 +64,50 @@ AKRESULT ToneFilterFXParams::Init(AK::IAkPluginMemAlloc* in_pAllocator, const vo
     return SetParamsBlock(in_pParamsBlock, in_ulBlockSize);
 }
 
-AKRESULT ToneFilterFXParams::Term(AK::IAkPluginMemAlloc* in_pAllocator)
+AKRESULT ToneFilterFXParams::Term(AK::IAkPluginMemAlloc *in_pAllocator)
 {
     AK_PLUGIN_DELETE(in_pAllocator, this);
     return AK_Success;
 }
 
-AKRESULT ToneFilterFXParams::SetParamsBlock(const void* in_pParamsBlock, AkUInt32 in_ulBlockSize)
+AKRESULT ToneFilterFXParams::SetParamsBlock(const void *in_pParamsBlock, AkUInt32 in_ulBlockSize)
 {
     AKRESULT eResult = AK_Success;
-    AkUInt8* pParamsBlock = (AkUInt8*)in_pParamsBlock;
+    AkUInt8 *pParamsBlock = (AkUInt8 *)in_pParamsBlock;
 
     // Read bank data here
-    RTPC.fPlaceholder = READBANKDATA(AkReal32, pParamsBlock, in_ulBlockSize);
+    RTPC.fFREQ0 = READBANKDATA(AkReal32, pParamsBlock, in_ulBlockSize);
+    RTPC.fFREQ1 = READBANKDATA(AkReal32, pParamsBlock, in_ulBlockSize);
+    RTPC.fFREQ2 = READBANKDATA(AkReal32, pParamsBlock, in_ulBlockSize);
+    RTPC.fFREQ3 = READBANKDATA(AkReal32, pParamsBlock, in_ulBlockSize);
     CHECKBANKDATASIZE(in_ulBlockSize, eResult);
     m_paramChangeHandler.SetAllParamChanges();
 
     return eResult;
 }
 
-AKRESULT ToneFilterFXParams::SetParam(AkPluginParamID in_paramID, const void* in_pValue, AkUInt32 in_ulParamSize)
+AKRESULT ToneFilterFXParams::SetParam(AkPluginParamID in_paramID, const void *in_pValue, AkUInt32 in_ulParamSize)
 {
     AKRESULT eResult = AK_Success;
 
     // Handle parameter change here
     switch (in_paramID)
     {
-    case PARAM_PLACEHOLDER_ID:
-        RTPC.fPlaceholder = *((AkReal32*)in_pValue);
-        m_paramChangeHandler.SetParamChange(PARAM_PLACEHOLDER_ID);
+    case PARAM_FREQ0_ID:
+        RTPC.fFREQ0 = *((AkReal32 *)in_pValue);
+        m_paramChangeHandler.SetParamChange(PARAM_FREQ0_ID);
+        break;
+    case PARAM_FREQ1_ID:
+        RTPC.fFREQ0 = *((AkReal32 *)in_pValue);
+        m_paramChangeHandler.SetParamChange(PARAM_FREQ1_ID);
+        break;
+    case PARAM_FREQ2_ID:
+        RTPC.fFREQ0 = *((AkReal32 *)in_pValue);
+        m_paramChangeHandler.SetParamChange(PARAM_FREQ2_ID);
+        break;
+    case PARAM_FREQ3_ID:
+        RTPC.fFREQ0 = *((AkReal32 *)in_pValue);
+        m_paramChangeHandler.SetParamChange(PARAM_FREQ3_ID);
         break;
     default:
         eResult = AK_InvalidParameter;

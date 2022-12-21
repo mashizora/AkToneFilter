@@ -30,6 +30,6 @@ for more information on factory assets
 -->
 <Manifest Name="ToneFilter" Type="Presets">
   <Dependencies>
-    <Plugin PluginName="ToneFilter" CompanyID="64" PluginID="9018" PluginType="3"/>
+    <Plugin PluginName="ToneFilter" CompanyID="64" PluginID="24290" PluginType="3"/>
   </Dependencies>
 </Manifest>
