@@ -92,28 +92,29 @@ void ToneFilterFX::Execute(AkAudioBuffer *io_pBuffer)
     filterArray[2].coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(sampleRate, m_pParams->RTPC.fFREQ2, 40);
     filterArray[3].coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(sampleRate, m_pParams->RTPC.fFREQ3, 40);
 
-    for (AkUInt32 i = 0; i < io_pBuffer->NumChannels(); ++i)
+    for (AkUInt32 ch = 0; ch < io_pBuffer->NumChannels(); ch++)
     {
-        AkSampleType *data = io_pBuffer->GetChannel(i);
+        AkSampleType *data = io_pBuffer->GetChannel(ch);
         juce::dsp::AudioBlock<AkSampleType> block(&data, 1, uMaxFrames);
-        juce::dsp::ProcessContextReplacing<AkSampleType> context(block);
-        AkSampleType *tempData = static_cast<AkSampleType *>(AK_PLUGIN_ALLOC(m_pAllocator, sizeof(AkSampleType) * uMaxFrames));
-        juce::dsp::AudioBlock<AkSampleType> tempBlock(&tempData, 1, uMaxFrames);
-        juce::dsp::ProcessContextNonReplacing<AkSampleType> tempContext(block, tempBlock);
+        auto *dst = block.getChannelPointer(0);
 
-        filterArray[0].process(tempContext);
-
-        auto &&inputBlock = tempContext.getOutputBlock();
-        auto &&outputBlock = context.getOutputBlock();
-
-        auto numSamples = inputBlock.getNumSamples();
-        auto *src = inputBlock.getChannelPointer(0);
-        auto *dst = outputBlock.getChannelPointer(0);
-        for (size_t i = 0; i < numSamples; ++i)
+        for (size_t j = 0; j < 4; j++)
         {
-            dst[i] = src[i];
+            AkSampleType *tempData = static_cast<AkSampleType *>(AK_PLUGIN_ALLOC(m_pAllocator, sizeof(AkSampleType) * uMaxFrames));
+            juce::dsp::AudioBlock<AkSampleType> tempBlock(&tempData, 1, uMaxFrames);
+            juce::dsp::ProcessContextNonReplacing<AkSampleType> context(block, tempBlock);
+
+            filterArray[0].process(context);
+
+            auto &&processedBlock = context.getOutputBlock();
+            auto numSamples = processedBlock.getNumSamples();
+            auto *src = processedBlock.getChannelPointer(0);
+            for (size_t i = 0; i < uMaxFrames; ++i)
+            {
+                dst[i] += src[i];
+            }
+            AK_PLUGIN_FREE(m_pAllocator, tempData);
         }
-        AK_PLUGIN_FREE(m_pAllocator, tempData);
     }
 }
 
