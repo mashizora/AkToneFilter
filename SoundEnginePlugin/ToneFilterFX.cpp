@@ -56,9 +56,12 @@ AKRESULT ToneFilterFX::Init(AK::IAkPluginMemAlloc *in_pAllocator, AK::IAkEffectP
     m_pAllocator = in_pAllocator;
     m_pContext = in_pContext;
 
-    for (size_t i = 0; i < filterArray.size(); i++)
+    for (size_t i = 0; i < 48; i++)
     {
-        filterArray[i].coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(in_rFormat.uSampleRate, freqMap[i], 20);
+        const auto param = filterParams[i];
+        const auto frequency = std::get<0>(param);
+        const auto Q = std::get<1>(param);
+        filterArray[i].coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(in_rFormat.uSampleRate, frequency, Q);
     }
 
     return AK_Success;
@@ -96,7 +99,11 @@ void ToneFilterFX::Execute(AkAudioBuffer *io_pBuffer)
         AkSampleType *data = io_pBuffer->GetChannel(channel);
         AkSampleType *outData = static_cast<AkSampleType *>(AK_PLUGIN_ALLOC(m_pAllocator, sizeof(AkSampleType) * uMaxFrames));
 
-        juce::dsp::AudioBlock<AkSampleType> block(&data, 1, uMaxFrames);
+        juce::AudioBuffer<AkSampleType> buffer(&data, 1, uMaxFrames);
+        buffer.getRMSLevel(0, 0, uMaxFrames);
+
+        juce::dsp::AudioBlock<AkSampleType>
+            block(&data, 1, uMaxFrames);
         for (auto &&filter : filterArray)
         {
             AkSampleType *tempData = static_cast<AkSampleType *>(AK_PLUGIN_ALLOC(m_pAllocator, sizeof(AkSampleType) * uMaxFrames));
