@@ -90,49 +90,35 @@ AKRESULT ToneFilterFX::GetPluginInfo(AkPluginInfo &out_rPluginInfo)
 void ToneFilterFX::Execute(AkAudioBuffer *io_pBuffer)
 {
     io_pBuffer->ZeroPadToMaxFrames();
-    const auto uNumChannels = io_pBuffer->NumChannels();
-    const auto uMaxFrames = io_pBuffer->MaxFrames();
+    const auto numChannels = io_pBuffer->NumChannels();
+    const auto numSamples = io_pBuffer->MaxFrames();
     const auto mix = m_pParams->RTPC.fMix;
 
     for (AkUInt32 channel = 0; channel < io_pBuffer->NumChannels(); channel++)
     {
-        AkSampleType *data = io_pBuffer->GetChannel(channel);
-        AkSampleType *outData = static_cast<AkSampleType *>(AK_PLUGIN_ALLOC(m_pAllocator, sizeof(AkSampleType) * uMaxFrames));
+        auto *data = io_pBuffer->GetChannel(channel);
+        auto block = juce::dsp::AudioBlock<AkSampleType>(&data, 1, numSamples);
 
-        juce::AudioBuffer<AkSampleType> buffer(&data, 1, uMaxFrames);
-        buffer.getRMSLevel(0, 0, uMaxFrames);
-
-        juce::dsp::AudioBlock<AkSampleType>
-            block(&data, 1, uMaxFrames);
+        auto *outData = static_cast<AkSampleType *>(AK_PLUGIN_ALLOC(m_pAllocator, sizeof(AkSampleType) * numSamples));
+        auto outBlock = juce::dsp::AudioBlock<AkSampleType>(&outData, 1, numSamples);
         for (auto &&filter : filterArray)
         {
-            AkSampleType *tempData = static_cast<AkSampleType *>(AK_PLUGIN_ALLOC(m_pAllocator, sizeof(AkSampleType) * uMaxFrames));
-            juce::dsp::AudioBlock<AkSampleType> tempBlock(&tempData, 1, uMaxFrames);
-            juce::dsp::ProcessContextNonReplacing<AkSampleType> context(block, tempBlock);
+            auto *tempData = static_cast<AkSampleType *>(AK_PLUGIN_ALLOC(m_pAllocator, sizeof(AkSampleType) * numSamples));
+            auto tempBuffer = juce::AudioBuffer(&tempData, 1, numSamples);
+            auto tempBlock = juce::dsp::AudioBlock<AkSampleType>(tempBuffer);
+            filter.process(juce::dsp::ProcessContextNonReplacing<AkSampleType>(block, tempBlock));
 
-            filter.process(context);
-
-            AkSampleType avg = 0;
-            for (size_t i = 0; i < uMaxFrames; ++i)
+            auto rms = tempBuffer.getRMSLevel(0, 0, numSamples);
+            for (size_t i = 0; i < numSamples; ++i)
             {
-                avg += abs(tempData[i]);
+                tempData[i] = tempData[i] > 0.f ? rms : -rms;
             }
 
-            avg /= uMaxFrames;
-
-            for (size_t i = 0; i < uMaxFrames; ++i)
-            {
-                tempData[i] = tempData[i] > 0.f ? avg : -avg;
-            }
-
-            for (size_t i = 0; i < uMaxFrames; ++i)
-            {
-                outData[i] += tempData[i];
-            }
+            outBlock += tempBlock;
             AK_PLUGIN_FREE(m_pAllocator, tempData);
         }
 
-        for (size_t i = 0; i < uMaxFrames; ++i)
+        for (size_t i = 0; i < numSamples; ++i)
         {
             data[i] = outData[i] * mix + data[i] * (1 - mix);
         }
