@@ -56,7 +56,10 @@ AKRESULT ToneFilterFX::Init(AK::IAkPluginMemAlloc *in_pAllocator, AK::IAkEffectP
     m_pAllocator = in_pAllocator;
     m_pContext = in_pContext;
 
-    sampleRate = in_rFormat.uSampleRate;
+    for (size_t i = 0; i < filterArray.size(); i++)
+    {
+        filterArray[i].coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(in_rFormat.uSampleRate, freqMap[i], 100);
+    }
 
     return AK_Success;
 }
@@ -87,34 +90,32 @@ void ToneFilterFX::Execute(AkAudioBuffer *io_pBuffer)
     const auto uNumChannels = io_pBuffer->NumChannels();
     const auto uMaxFrames = io_pBuffer->MaxFrames();
 
-    filterArray[0].coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(sampleRate, m_pParams->RTPC.fFREQ0, 40);
-    filterArray[1].coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(sampleRate, m_pParams->RTPC.fFREQ1, 40);
-    filterArray[2].coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(sampleRate, m_pParams->RTPC.fFREQ2, 40);
-    filterArray[3].coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(sampleRate, m_pParams->RTPC.fFREQ3, 40);
-
-    for (AkUInt32 ch = 0; ch < io_pBuffer->NumChannels(); ch++)
+    for (AkUInt32 channel = 0; channel < io_pBuffer->NumChannels(); channel++)
     {
-        AkSampleType *data = io_pBuffer->GetChannel(ch);
-        juce::dsp::AudioBlock<AkSampleType> block(&data, 1, uMaxFrames);
-        auto *dst = block.getChannelPointer(0);
+        AkSampleType *data = io_pBuffer->GetChannel(channel);
+        AkSampleType *outData = static_cast<AkSampleType *>(AK_PLUGIN_ALLOC(m_pAllocator, sizeof(AkSampleType) * uMaxFrames));
 
-        for (size_t j = 0; j < 4; j++)
+        juce::dsp::AudioBlock<AkSampleType> block(&data, 1, uMaxFrames);
+        for (auto &&filter : filterArray)
         {
             AkSampleType *tempData = static_cast<AkSampleType *>(AK_PLUGIN_ALLOC(m_pAllocator, sizeof(AkSampleType) * uMaxFrames));
             juce::dsp::AudioBlock<AkSampleType> tempBlock(&tempData, 1, uMaxFrames);
             juce::dsp::ProcessContextNonReplacing<AkSampleType> context(block, tempBlock);
 
-            filterArray[0].process(context);
+            filter.process(context);
 
-            auto &&processedBlock = context.getOutputBlock();
-            auto numSamples = processedBlock.getNumSamples();
-            auto *src = processedBlock.getChannelPointer(0);
             for (size_t i = 0; i < uMaxFrames; ++i)
             {
-                dst[i] += src[i];
+                outData[i] += tempData[i];
             }
             AK_PLUGIN_FREE(m_pAllocator, tempData);
         }
+
+        for (size_t i = 0; i < uMaxFrames; ++i)
+        {
+            data[i] = outData[i];
+        }
+        AK_PLUGIN_FREE(m_pAllocator, outData);
     }
 }
 
