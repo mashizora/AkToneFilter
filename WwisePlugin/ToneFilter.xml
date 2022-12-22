@@ -52,54 +52,15 @@ documentation about the plugin xml format
     </PluginInfo>
     <Properties>
       <!-- Add your property definitions here -->
-      <Property Name="FREQ0" Type="Real32" SupportRTPCType="Exclusive" DisplayName="FREQ0">
-        <UserInterface Step="1" Fine="0.001" Decimals="3" UIMin="10" UIMax="10000" />
-        <DefaultValue>440</DefaultValue>
+      <Property Name="Mix" Type="Real32" SupportRTPCType="Exclusive" DisplayName="Mix">
+        <UserInterface Step="0.05" Fine="0.01" Decimals="2" UIMin="0" UIMax="1" />
+        <DefaultValue>0.5</DefaultValue>
         <AudioEnginePropertyID>0</AudioEnginePropertyID>
         <Restrictions>
           <ValueRestriction>
             <Range Type="Real32">
-              <Min>10</Min>
-              <Max>10000</Max>
-            </Range>
-          </ValueRestriction>
-        </Restrictions>
-      </Property>
-      <Property Name="FREQ1" Type="Real32" SupportRTPCType="Exclusive" DisplayName="FREQ1">
-        <UserInterface Step="1" Fine="0.001" Decimals="3" UIMin="10" UIMax="10000" />
-        <DefaultValue>440</DefaultValue>
-        <AudioEnginePropertyID>1</AudioEnginePropertyID>
-        <Restrictions>
-          <ValueRestriction>
-            <Range Type="Real32">
-              <Min>10</Min>
-              <Max>10000</Max>
-            </Range>
-          </ValueRestriction>
-        </Restrictions>
-      </Property>
-      <Property Name="FREQ2" Type="Real32" SupportRTPCType="Exclusive" DisplayName="FREQ2">
-        <UserInterface Step="1" Fine="0.001" Decimals="3" UIMin="10" UIMax="10000" />
-        <DefaultValue>440</DefaultValue>
-        <AudioEnginePropertyID>2</AudioEnginePropertyID>
-        <Restrictions>
-          <ValueRestriction>
-            <Range Type="Real32">
-              <Min>10</Min>
-              <Max>10000</Max>
-            </Range>
-          </ValueRestriction>
-        </Restrictions>
-      </Property>
-      <Property Name="FREQ3" Type="Real32" SupportRTPCType="Exclusive" DisplayName="FREQ3">
-        <UserInterface Step="1" Fine="0.001" Decimals="3" UIMin="10" UIMax="10000" />
-        <DefaultValue>440</DefaultValue>
-        <AudioEnginePropertyID>3</AudioEnginePropertyID>
-        <Restrictions>
-          <ValueRestriction>
-            <Range Type="Real32">
-              <Min>10</Min>
-              <Max>10000</Max>
+              <Min>0</Min>
+              <Max>1</Max>
             </Range>
           </ValueRestriction>
         </Restrictions>

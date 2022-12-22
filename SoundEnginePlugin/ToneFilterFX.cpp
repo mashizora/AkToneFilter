@@ -58,7 +58,7 @@ AKRESULT ToneFilterFX::Init(AK::IAkPluginMemAlloc *in_pAllocator, AK::IAkEffectP
 
     for (size_t i = 0; i < filterArray.size(); i++)
     {
-        filterArray[i].coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(in_rFormat.uSampleRate, freqMap[i], 100);
+        filterArray[i].coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(in_rFormat.uSampleRate, freqMap[i], 20);
     }
 
     return AK_Success;
@@ -89,6 +89,7 @@ void ToneFilterFX::Execute(AkAudioBuffer *io_pBuffer)
     io_pBuffer->ZeroPadToMaxFrames();
     const auto uNumChannels = io_pBuffer->NumChannels();
     const auto uMaxFrames = io_pBuffer->MaxFrames();
+    const auto mix = m_pParams->RTPC.fMix;
 
     for (AkUInt32 channel = 0; channel < io_pBuffer->NumChannels(); channel++)
     {
@@ -104,6 +105,19 @@ void ToneFilterFX::Execute(AkAudioBuffer *io_pBuffer)
 
             filter.process(context);
 
+            AkSampleType avg = 0;
+            for (size_t i = 0; i < uMaxFrames; ++i)
+            {
+                avg += abs(tempData[i]);
+            }
+
+            avg /= uMaxFrames;
+
+            for (size_t i = 0; i < uMaxFrames; ++i)
+            {
+                tempData[i] = tempData[i] > 0.f ? avg : -avg;
+            }
+
             for (size_t i = 0; i < uMaxFrames; ++i)
             {
                 outData[i] += tempData[i];
@@ -113,7 +127,7 @@ void ToneFilterFX::Execute(AkAudioBuffer *io_pBuffer)
 
         for (size_t i = 0; i < uMaxFrames; ++i)
         {
-            data[i] = outData[i];
+            data[i] = outData[i] * mix + data[i] * (1 - mix);
         }
         AK_PLUGIN_FREE(m_pAllocator, outData);
     }

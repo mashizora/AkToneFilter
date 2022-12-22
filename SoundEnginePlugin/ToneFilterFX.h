@@ -67,14 +67,16 @@ private:
     AK::IAkPluginMemAlloc *m_pAllocator;
     AK::IAkEffectPluginContext *m_pContext;
 
-    juce::dsp::DryWetMixer<AkSampleType> mixer;
-    std::array<juce::dsp::IIR::Filter<AkSampleType>, 4> filterArray;
-    std::array<float, 4> freqMap{
+    std::array<juce::dsp::IIR::Filter<AkSampleType>, 8> filterArray;
+    std::array<float, 8> freqMap{
+        55.0,
         110.0,
         220.0,
         440.0,
-        880.0
-
+        880.0,
+        1760.0,
+        3520.0,
+        7040.0,
     };
 };
 #endif // ToneFilterFX_H

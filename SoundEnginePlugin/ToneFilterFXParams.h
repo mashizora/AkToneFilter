@@ -32,18 +32,12 @@ the specific language governing permissions and limitations under the License.
 
 // Add parameters IDs here, those IDs should map to the AudioEnginePropertyID
 // attributes in the xml property definition.
-static const AkPluginParamID PARAM_FREQ0_ID = 0;
-static const AkPluginParamID PARAM_FREQ1_ID = 1;
-static const AkPluginParamID PARAM_FREQ2_ID = 2;
-static const AkPluginParamID PARAM_FREQ3_ID = 3;
-static const AkUInt32 NUM_PARAMS = 4;
+static const AkPluginParamID PARAM_MIX_ID = 0;
+static const AkUInt32 NUM_PARAMS = 1;
 
 struct ToneFilterRTPCParams
 {
-    AkReal32 fFREQ0;
-    AkReal32 fFREQ1;
-    AkReal32 fFREQ2;
-    AkReal32 fFREQ3;
+    AkReal32 fMix;
 };
 
 struct ToneFilterNonRTPCParams

@@ -38,9 +38,7 @@ ToneFilterPlugin::~ToneFilterPlugin()
 bool ToneFilterPlugin::GetBankParameters(const GUID &in_guidPlatform, AK::Wwise::Plugin::DataWriter &in_dataWriter) const
 {
   // Write bank data here
-  in_dataWriter.WriteReal32(m_propertySet.GetReal32(in_guidPlatform, "FREQ0"));
-  in_dataWriter.WriteReal32(m_propertySet.GetReal32(in_guidPlatform, "FREQ1"));
-  in_dataWriter.WriteReal32(m_propertySet.GetReal32(in_guidPlatform, "FREQ2"));
+  in_dataWriter.WriteReal32(m_propertySet.GetReal32(in_guidPlatform, "Mix"));
 
   return true;
 }
