@@ -107,16 +107,16 @@ private:
         std::tuple(1244.5f, 30.0f),
         std::tuple(1396.9f, 20.0f),
         std::tuple(1568.0f, 20.0f),
-        std::tuple(1760.0f, 5.0f),
-        std::tuple(1975.5f, 5.0f),
-        std::tuple(2217.5f, 5.0f),
-        std::tuple(2489.0f, 5.0f),
-        std::tuple(2793.8f, 5.0f),
-        std::tuple(3136.0f, 5.0f),
-        std::tuple(3520.0f, 5.0f),
-        std::tuple(3951.0f, 5.0f),
-        std::tuple(4434.9f, 5.0f),
-        std::tuple(4978.0f, 5.0f),
+        std::tuple(1760.00f, 15.0f),
+        std::tuple(1975.53f, 9.0f),  // MAX
+        std::tuple(2217.46f, 11.0f), // MAX
+        std::tuple(2489.02f, 14.0f), // MAX
+        std::tuple(2793.83f, 16.0f), // MAX
+        std::tuple(3135.96f, 14.0f), // MAX
+        std::tuple(3520.00f, 13.0f), // MAX
+        std::tuple(3951.07f, 9.0f),  // MAX
+        std::tuple(4434.92f, 10.0f), // MAX
+        std::tuple(4978.03f, 10.0f), // MAX
     };
 };
 #endif // ToneFilterFX_H

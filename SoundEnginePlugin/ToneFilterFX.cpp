@@ -98,17 +98,16 @@ void ToneFilterFX::Execute(AkAudioBuffer *io_pBuffer)
     {
         auto *data = io_pBuffer->GetChannel(channel);
         auto block = juce::dsp::AudioBlock<AkSampleType>(&data, 1, numSamples);
-
         auto *outData = static_cast<AkSampleType *>(AK_PLUGIN_ALLOC(m_pAllocator, sizeof(AkSampleType) * numSamples));
         auto outBlock = juce::dsp::AudioBlock<AkSampleType>(&outData, 1, numSamples);
+
         for (auto &&filter : filterArray)
         {
             auto *tempData = static_cast<AkSampleType *>(AK_PLUGIN_ALLOC(m_pAllocator, sizeof(AkSampleType) * numSamples));
-            auto tempBuffer = juce::AudioBuffer(&tempData, 1, numSamples);
-            auto tempBlock = juce::dsp::AudioBlock<AkSampleType>(tempBuffer);
+            auto tempBlock = juce::dsp::AudioBlock<AkSampleType>(&tempData, 1, numSamples);
             filter.process(juce::dsp::ProcessContextNonReplacing<AkSampleType>(block, tempBlock));
 
-            auto rms = tempBuffer.getRMSLevel(0, 0, numSamples);
+            auto rms = juce::AudioBuffer<AkSampleType>(&tempData, 1, numSamples).getRMSLevel(0, 0, numSamples);
             for (size_t i = 0; i < numSamples; ++i)
             {
                 tempData[i] = tempData[i] > 0.f ? rms : -rms;
