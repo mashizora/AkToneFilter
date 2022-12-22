@@ -61,7 +61,10 @@ AKRESULT ToneFilterFX::Init(AK::IAkPluginMemAlloc *in_pAllocator, AK::IAkEffectP
         const auto param = filterParams[i];
         const auto frequency = std::get<0>(param);
         const auto Q = std::get<1>(param);
-        filterArray[i].coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(in_rFormat.uSampleRate, frequency, Q);
+        filterArray[i].get<0>().coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(in_rFormat.uSampleRate, frequency, Q);
+        filterArray[i].get<1>().coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(in_rFormat.uSampleRate, frequency, Q);
+        filterArray[i].get<2>().coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(in_rFormat.uSampleRate, frequency, Q);
+        filterArray[i].get<3>().coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(in_rFormat.uSampleRate, frequency, Q);
     }
 
     return AK_Success;
