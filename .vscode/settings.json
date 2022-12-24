@@ -80,6 +80,7 @@
     "xtree": "cpp",
     "xutility": "cpp",
     "*.mm": "cpp",
-    "random": "cpp"
+    "random": "cpp",
+    "*.rh": "cpp"
   }
 }

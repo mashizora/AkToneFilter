@@ -56,15 +56,18 @@ AKRESULT ToneFilterFX::Init(AK::IAkPluginMemAlloc *in_pAllocator, AK::IAkEffectP
     m_pAllocator = in_pAllocator;
     m_pContext = in_pContext;
 
-    for (size_t i = 0; i < 48; i++)
+    for (size_t ch = 0; ch < 2; ch++)
     {
-        const auto param = filterParams[i];
-        const auto frequency = std::get<0>(param);
-        const auto Q = std::get<1>(param);
-        filterArray[i].get<0>().coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(in_rFormat.uSampleRate, frequency, Q);
-        filterArray[i].get<1>().coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(in_rFormat.uSampleRate, frequency, Q);
-        filterArray[i].get<2>().coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(in_rFormat.uSampleRate, frequency, Q);
-        filterArray[i].get<3>().coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(in_rFormat.uSampleRate, frequency, Q);
+        for (size_t i = 0; i < 48; i++)
+        {
+            const auto param = filterParams[i];
+            const auto frequency = std::get<0>(param);
+            const auto Q = std::get<1>(param);
+            filterArray[ch][i].get<0>().coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(in_rFormat.uSampleRate, frequency, Q);
+            filterArray[ch][i].get<1>().coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(in_rFormat.uSampleRate, frequency, Q);
+            filterArray[ch][i].get<2>().coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(in_rFormat.uSampleRate, frequency, Q);
+            filterArray[ch][i].get<3>().coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(in_rFormat.uSampleRate, frequency, Q);
+        }
     }
 
     return AK_Success;
@@ -97,14 +100,14 @@ void ToneFilterFX::Execute(AkAudioBuffer *io_pBuffer)
     const auto numSamples = io_pBuffer->MaxFrames();
     const auto mix = m_pParams->RTPC.fMix;
 
-    for (AkUInt32 channel = 0; channel < io_pBuffer->NumChannels(); channel++)
+    for (AkUInt32 ch = 0; ch < io_pBuffer->NumChannels(); ch++)
     {
-        auto *data = io_pBuffer->GetChannel(channel);
+        auto *data = io_pBuffer->GetChannel(ch);
         auto block = juce::dsp::AudioBlock<AkSampleType>(&data, 1, numSamples);
         auto *outData = static_cast<AkSampleType *>(AK_PLUGIN_ALLOC(m_pAllocator, sizeof(AkSampleType) * numSamples));
         auto outBlock = juce::dsp::AudioBlock<AkSampleType>(&outData, 1, numSamples);
 
-        for (auto &&filter : filterArray)
+        for (auto &&filter : filterArray[ch])
         {
             auto *tempData = static_cast<AkSampleType *>(AK_PLUGIN_ALLOC(m_pAllocator, sizeof(AkSampleType) * numSamples));
             auto tempBlock = juce::dsp::AudioBlock<AkSampleType>(&tempData, 1, numSamples);

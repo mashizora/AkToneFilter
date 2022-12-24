@@ -68,7 +68,7 @@ private:
     AK::IAkEffectPluginContext *m_pContext;
 
     using Filter = juce::dsp::IIR::Filter<AkSampleType>;
-    std::array<juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>, 48> filterArray;
+    std::array<std::array<juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>, 48>, 2> filterArray;
     std::array<std::tuple<float, float>, 48> filterParams{
         // std::tuple(110.00f, 80.f),
         // std::tuple(116.54f, 80.f),
