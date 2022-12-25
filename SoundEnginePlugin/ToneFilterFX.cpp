@@ -56,17 +56,13 @@ AKRESULT ToneFilterFX::Init(AK::IAkPluginMemAlloc *in_pAllocator, AK::IAkEffectP
     m_pAllocator = in_pAllocator;
     m_pContext = in_pContext;
 
-    for (size_t ch = 0; ch < 2; ch++)
+    const auto numChannels = in_rFormat.GetNumChannels();
+    for (size_t ch = 0; ch < numChannels; ch++)
     {
+        filterMatrix.emplace_back(FilterArray());
         for (size_t i = 0; i < 48; i++)
         {
-            const auto param = filterParams[i];
-            const auto frequency = std::get<0>(param);
-            const auto Q = std::get<1>(param);
-            filterArray[ch][i].get<0>().coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(in_rFormat.uSampleRate, frequency, Q);
-            filterArray[ch][i].get<1>().coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(in_rFormat.uSampleRate, frequency, Q);
-            filterArray[ch][i].get<2>().coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(in_rFormat.uSampleRate, frequency, Q);
-            filterArray[ch][i].get<3>().coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(in_rFormat.uSampleRate, frequency, Q);
+            filterMatrix[ch][i].setCoefficients(in_rFormat.uSampleRate, freqList[i], 40.0f);
         }
     }
 
@@ -95,31 +91,32 @@ AKRESULT ToneFilterFX::GetPluginInfo(AkPluginInfo &out_rPluginInfo)
 
 void ToneFilterFX::Execute(AkAudioBuffer *io_pBuffer)
 {
-    io_pBuffer->ZeroPadToMaxFrames();
     const auto numChannels = io_pBuffer->NumChannels();
-    const auto numSamples = io_pBuffer->MaxFrames();
+    const auto numSamples = io_pBuffer->uValidFrames;
     const auto mix = m_pParams->RTPC.fMix;
 
     for (AkUInt32 ch = 0; ch < io_pBuffer->NumChannels(); ch++)
     {
         auto *data = io_pBuffer->GetChannel(ch);
-        auto block = juce::dsp::AudioBlock<AkSampleType>(&data, 1, numSamples);
-        auto *outData = static_cast<AkSampleType *>(AK_PLUGIN_ALLOC(m_pAllocator, sizeof(AkSampleType) * numSamples));
-        auto outBlock = juce::dsp::AudioBlock<AkSampleType>(&outData, 1, numSamples);
 
-        for (auto &&filter : filterArray[ch])
+        // Pass to tone filter array.
+        auto *outData = static_cast<AkSampleType *>(AK_PLUGIN_ALLOC(m_pAllocator, sizeof(AkSampleType) * numSamples));
+        for (auto &&filter : filterMatrix[ch])
         {
             auto *tempData = static_cast<AkSampleType *>(AK_PLUGIN_ALLOC(m_pAllocator, sizeof(AkSampleType) * numSamples));
-            auto tempBlock = juce::dsp::AudioBlock<AkSampleType>(&tempData, 1, numSamples);
-            filter.process(juce::dsp::ProcessContextNonReplacing<AkSampleType>(block, tempBlock));
+            filter.process(data, tempData, numSamples);
 
-            auto rms = juce::AudioBuffer<AkSampleType>(&tempData, 1, numSamples).getRMSLevel(0, 0, numSamples);
+            // Clip sine wave into square.
+            auto rms = DSP::Utils::calculateRMS(tempData, numSamples);
             for (size_t i = 0; i < numSamples; ++i)
             {
-                tempData[i] = tempData[i] > 0.f ? rms : -rms;
+                tempData[i] = tempData[i] > 0.0f ? rms : -rms;
             }
 
-            outBlock += tempBlock;
+            for (size_t i = 0; i < numSamples; ++i)
+            {
+                outData[i] += tempData[i];
+            }
             AK_PLUGIN_FREE(m_pAllocator, tempData);
         }
 

@@ -39,20 +39,9 @@ Plugin.authoring = {}
 -- SDK STATIC PLUGIN SECTION
 Plugin.sdk.static.includedirs = -- https://github.com/premake/premake-core/wiki/includedirs
 {
-    "../JuceModules",
-
 }
 Plugin.sdk.static.files = -- https://github.com/premake/premake-core/wiki/files
 {
-    "../JuceModules/juce_core/juce_core.h",
-    "../JuceModules/juce_core/juce_core.cpp",
-    "../JuceModules/juce_audio_formats/juce_audio_formats.h",
-    "../JuceModules/juce_audio_formats/juce_audio_formats.cpp",
-    "../JuceModules/juce_audio_basics/juce_audio_basics.h",
-    "../JuceModules/juce_audio_basics/juce_audio_basics.cpp",
-    "../JuceModules/juce_dsp/juce_dsp.h",
-    "../JuceModules/juce_dsp/juce_dsp.cpp",
-
     "**.cpp",
     "**.h",
     "**.hpp",
@@ -71,16 +60,9 @@ Plugin.sdk.static.libdirs = -- https://github.com/premake/premake-core/wiki/libd
 }
 Plugin.sdk.static.defines = -- https://github.com/premake/premake-core/wiki/defines
 {
-    "JUCE_MODULE_AVAILABLE_juce_audio_basics=1",
-    "JUCE_MODULE_AVAILABLE_juce_audio_formats=1",
-    "JUCE_MODULE_AVAILABLE_juce_core=1",
-    "JUCE_MODULE_AVAILABLE_juce_dsp=1",
-    "JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1",
 }
 Plugin.sdk.static.custom = function()
-    cppdialect "C++17"
-    rtti("on")
-    exceptionhandling ("on")
+    cppdialect "C++20"
 end
 
 -- SDK SHARED PLUGIN SECTION

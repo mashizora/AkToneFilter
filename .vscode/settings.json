@@ -81,6 +81,7 @@
     "xutility": "cpp",
     "*.mm": "cpp",
     "random": "cpp",
-    "*.rh": "cpp"
+    "*.rh": "cpp",
+    "numbers": "cpp"
   }
 }
